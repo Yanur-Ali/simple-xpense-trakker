@@ -1,5 +1,5 @@
 
-import { Calendar, Tag } from "lucide-react";
+import { Calendar, Tag, Edit2, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/formatters";
 
@@ -16,9 +16,17 @@ interface TransactionCardProps {
   transaction: Transaction;
   currency: string;
   className?: string;
+  onEdit?: (transaction: Transaction) => void;
+  onDelete?: (transaction: Transaction) => void;
 }
 
-export function TransactionCard({ transaction, currency, className }: TransactionCardProps) {
+export function TransactionCard({ 
+  transaction, 
+  currency, 
+  className,
+  onEdit,
+  onDelete
+}: TransactionCardProps) {
   const { type, amount, category, date, note } = transaction;
   
   return (
@@ -54,6 +62,28 @@ export function TransactionCard({ transaction, currency, className }: Transactio
           {note && <p className="text-xs text-muted-foreground line-clamp-1">{note}</p>}
         </div>
       </div>
+      
+      {/* Action buttons */}
+      {(onEdit || onDelete) && (
+        <div className="flex items-center gap-1 ml-2">
+          {onEdit && (
+            <button 
+              onClick={() => onEdit(transaction)} 
+              className="p-1.5 rounded-full hover:bg-accent"
+            >
+              <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          )}
+          {onDelete && (
+            <button 
+              onClick={() => onDelete(transaction)} 
+              className="p-1.5 rounded-full hover:bg-accent"
+            >
+              <Trash className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
