@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const Navigation = () => {
   const navItems = [
     { to: "/dashboard", icon: Home, label: "Home" },
-    { to: "/add-transaction", icon: PlusCircle, label: "Add" },
+    { to: "/add-transaction", icon: PlusCircle, label: "Add", primary: true },
     { to: "/statistics", icon: BarChart3, label: "Stats" },
     { to: "/profile", icon: UserCircle, label: "Profile" },
   ];
@@ -22,19 +22,31 @@ const Navigation = () => {
               cn(
                 "flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-colors",
                 "text-muted-foreground hover:text-foreground",
-                isActive && "text-primary font-medium"
+                isActive && "text-primary font-medium",
+                item.primary && "relative"
               )
             }
           >
             {({ isActive }) => (
               <>
-                <item.icon
-                  className={cn(
-                    "w-6 h-6 transition-transform duration-200",
-                    isActive && "scale-110"
-                  )}
-                />
-                <span className="text-xs">{item.label}</span>
+                {item.primary ? (
+                  <div className="absolute -top-6 bg-primary text-primary-foreground p-3 rounded-full shadow-lg">
+                    <item.icon
+                      className={cn(
+                        "w-6 h-6 transition-transform duration-200",
+                        isActive && "scale-110"
+                      )}
+                    />
+                  </div>
+                ) : (
+                  <item.icon
+                    className={cn(
+                      "w-6 h-6 transition-transform duration-200",
+                      isActive && "scale-110"
+                    )}
+                  />
+                )}
+                <span className={cn("text-xs", item.primary && "mt-4")}>{item.label}</span>
               </>
             )}
           </NavLink>

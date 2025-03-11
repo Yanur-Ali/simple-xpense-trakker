@@ -6,13 +6,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { ArrowLeft, Calendar, DollarSign } from "lucide-react";
+import { ArrowLeft, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
@@ -22,19 +21,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import CategorySticker from "@/components/ui/category-sticker";
 import { sampleCategories } from "@/lib/sample-data";
 
 const transactionSchema = z.object({
@@ -57,7 +44,7 @@ const AddTransaction = () => {
       type: "expense",
       amount: "",
       category: "",
-      date: new Date(),
+      date: new Date(), // Current date is set automatically
       note: "",
     },
   });
@@ -93,6 +80,12 @@ const AddTransaction = () => {
     }
   };
 
+  // Filter categories based on transaction type
+  const filteredCategories = sampleCategories.filter(category => 
+    (transactionType === "expense" && category.name !== "Salary" && category.name !== "Investments") ||
+    (transactionType === "income" && (category.name === "Salary" || category.name === "Investments"))
+  );
+
   return (
     <motion.div 
       initial="hidden"
@@ -125,6 +118,7 @@ const AddTransaction = () => {
             onClick={() => {
               setTransactionType("expense");
               form.setValue("type", "expense");
+              form.setValue("category", "");
             }}
           >
             Expense
@@ -139,6 +133,7 @@ const AddTransaction = () => {
             onClick={() => {
               setTransactionType("income");
               form.setValue("type", "income");
+              form.setValue("category", "");
             }}
           >
             Income
@@ -164,6 +159,7 @@ const AddTransaction = () => {
                         step="0.01"
                         placeholder="0.00"
                         className="pl-9 text-lg"
+                        autoFocus // Automatically focus on amount field
                       />
                     </div>
                   </FormControl>
@@ -172,7 +168,7 @@ const AddTransaction = () => {
               )}
             />
           </motion.div>
-          
+
           <motion.div variants={itemVariants}>
             <FormField
               control={form.control}
@@ -180,77 +176,26 @@ const AddTransaction = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {sampleCategories
-                        .filter(category => 
-                          (transactionType === "expense" && category.name !== "Salary" && category.name !== "Investments") ||
-                          (transactionType === "income" && (category.name === "Salary" || category.name === "Investments"))
-                        )
-                        .map(category => (
-                          <SelectItem key={category.id} value={category.name}>
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="w-2.5 h-2.5 rounded-full" 
-                                style={{ backgroundColor: category.color }}
-                              />
-                              {category.name}
-                            </div>
-                          </SelectItem>
-                        ))
-                      }
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </motion.div>
-          
-          <motion.div variants={itemVariants}>
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
+                  <FormControl>
+                    <div className="grid grid-cols-4 gap-3 py-2">
+                      {filteredCategories.map((category) => (
+                        <div 
+                          key={category.id} 
+                          className="flex flex-col items-center gap-1"
                         >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <Calendar className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <CalendarComponent
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
+                          <CategorySticker
+                            category={category.name}
+                            color={category.color}
+                            selected={field.value === category.name}
+                            onClick={() => field.onChange(category.name)}
+                          />
+                          <span className="text-xs font-medium text-center">
+                            {category.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -275,6 +220,12 @@ const AddTransaction = () => {
                 </FormItem>
               )}
             />
+          </motion.div>
+          
+          <motion.div variants={itemVariants}>
+            <div className="text-sm text-muted-foreground mb-4">
+              Date: {format(new Date(), "MMM d, yyyy")} (Today)
+            </div>
           </motion.div>
           
           <motion.div variants={itemVariants}>
