@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { BalanceCard } from "@/components/ui/balance-card";
 import { TransactionCard } from "@/components/ui/transaction-card";
 import { ExpenseChart } from "@/components/ui/expense-chart";
+import { BudgetSection } from "@/components/budget/BudgetSection";
 import { getExpenseData, getTotalBalance, sampleTransactions } from "@/lib/sample-data";
 
 const Dashboard = () => {
@@ -62,6 +63,10 @@ const Dashboard = () => {
       
       <motion.div variants={itemVariants}>
         <ExpenseChart data={expenseData} />
+      </motion.div>
+
+      <motion.div variants={itemVariants}>
+        <BudgetSection />
       </motion.div>
       
       <motion.div variants={itemVariants} className="space-y-3">
