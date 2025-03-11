@@ -9,20 +9,12 @@ import { format } from "date-fns";
 import { ArrowLeft, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import CategorySticker from "@/components/ui/category-sticker";
-import { sampleCategories } from "@/lib/sample-data";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import TransactionTypeSelector from "@/components/transactions/TransactionTypeSelector";
+import CategorySelector from "@/components/transactions/CategorySelector";
 
 const transactionSchema = z.object({
   type: z.enum(["expense", "income"]),
@@ -44,23 +36,17 @@ const AddTransaction = () => {
       type: "expense",
       amount: "",
       category: "",
-      date: new Date(), // Current date is set automatically
+      date: new Date(),
       note: "",
     },
   });
-  
+
   const onSubmit = (data: TransactionForm) => {
     console.log("Transaction submitted:", data);
-    
-    // Show success toast
     toast.success("Transaction added successfully!", {
       description: `${data.type === "expense" ? "Expense" : "Income"} of $${data.amount} for ${data.category}`,
     });
-    
-    // Wait a moment then navigate to dashboard
-    setTimeout(() => {
-      navigate("/dashboard");
-    }, 500);
+    setTimeout(() => navigate("/dashboard"), 500);
   };
 
   const containerVariants = {
@@ -79,12 +65,6 @@ const AddTransaction = () => {
       transition: { type: "spring", stiffness: 300, damping: 24 }
     }
   };
-
-  // Filter categories based on transaction type
-  const filteredCategories = sampleCategories.filter(category => 
-    (transactionType === "expense" && category.name !== "Salary" && category.name !== "Investments") ||
-    (transactionType === "income" && (category.name === "Salary" || category.name === "Investments"))
-  );
 
   return (
     <motion.div 
@@ -107,38 +87,14 @@ const AddTransaction = () => {
       </motion.div>
       
       <motion.div variants={itemVariants} className="mb-6">
-        <div className="flex gap-2 p-1.5 bg-secondary rounded-lg">
-          <Button
-            type="button"
-            variant={transactionType === "expense" ? "default" : "ghost"}
-            className={cn(
-              "flex-1 font-medium",
-              transactionType === "expense" && "bg-expense hover:bg-expense/90",
-            )}
-            onClick={() => {
-              setTransactionType("expense");
-              form.setValue("type", "expense");
-              form.setValue("category", "");
-            }}
-          >
-            Expense
-          </Button>
-          <Button
-            type="button"
-            variant={transactionType === "income" ? "default" : "ghost"}
-            className={cn(
-              "flex-1 font-medium",
-              transactionType === "income" && "bg-income hover:bg-income/90",
-            )}
-            onClick={() => {
-              setTransactionType("income");
-              form.setValue("type", "income");
-              form.setValue("category", "");
-            }}
-          >
-            Income
-          </Button>
-        </div>
+        <TransactionTypeSelector 
+          transactionType={transactionType}
+          onTypeChange={(type) => {
+            setTransactionType(type);
+            form.setValue("type", type);
+            form.setValue("category", "");
+          }}
+        />
       </motion.div>
       
       <Form {...form}>
@@ -159,7 +115,7 @@ const AddTransaction = () => {
                         step="0.01"
                         placeholder="0.00"
                         className="pl-9 text-lg"
-                        autoFocus // Automatically focus on amount field
+                        autoFocus
                       />
                     </div>
                   </FormControl>
@@ -170,36 +126,7 @@ const AddTransaction = () => {
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <div className="grid grid-cols-4 gap-3 py-2">
-                      {filteredCategories.map((category) => (
-                        <div 
-                          key={category.id} 
-                          className="flex flex-col items-center gap-1"
-                        >
-                          <CategorySticker
-                            category={category.name}
-                            color={category.color}
-                            selected={field.value === category.name}
-                            onClick={() => field.onChange(category.name)}
-                          />
-                          <span className="text-xs font-medium text-center">
-                            {category.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <CategorySelector form={form} transactionType={transactionType} />
           </motion.div>
           
           <motion.div variants={itemVariants}>
