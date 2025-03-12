@@ -47,7 +47,7 @@ export const BudgetSection = () => {
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
-  const [period, setPeriod] = useState<"weekly" | "monthly" | "yearly">("monthly");
+  const [period, setPeriod] = useState<"daily" | "weekly" | "monthly">("monthly");
   const { toast } = useToast();
 
   const handleAddBudget = () => {
@@ -142,9 +142,9 @@ export const BudgetSection = () => {
                     <SelectValue placeholder="Select period" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
                     <SelectItem value="weekly">Weekly</SelectItem>
                     <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -184,8 +184,7 @@ export const BudgetSection = () => {
                 </div>
                 <Progress
                   value={percentage}
-                  className="h-2.5"
-                  indicatorClassName={getProgressColor(percentage)}
+                  className={`h-2.5 ${getProgressColor(percentage)}`}
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{budget.period}</span>
@@ -199,3 +198,4 @@ export const BudgetSection = () => {
     </motion.div>
   );
 };
+

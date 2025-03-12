@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,22 +18,20 @@ import AppLayout from "./components/layout/AppLayout";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Handle Capacitor app lifecycle events
   useEffect(() => {
     // Only run in Capacitor environment
     if (!(window as any).Capacitor) return;
 
-    // App state change events
-    CapacitorApp.addListener("appStateChange", ({ isActive }) => {
+    const handleAppStateChange = ({ isActive }: { isActive: boolean }) => {
       console.log("App state changed. Is active:", isActive);
-      // Could pause/resume subscriptions, animations, etc.
-    });
+    };
 
-    // App URL open events (deeplinks)
-    CapacitorApp.addListener("appUrlOpen", ({ url }) => {
+    const handleAppUrlOpen = ({ url }: { url: string }) => {
       console.log("App opened with URL:", url);
-      // Handle deep linking
-    });
+    };
+
+    CapacitorApp.addListener("appStateChange", handleAppStateChange);
+    CapacitorApp.addListener("appUrlOpen", handleAppUrlOpen);
 
     return () => {
       if ((window as any).Capacitor) {
