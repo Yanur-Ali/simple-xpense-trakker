@@ -38,12 +38,19 @@ const CategorySelector = ({ form, transactionType }: CategorySelectorProps) => {
                 key={category.id} 
                 className="flex flex-col items-center gap-1"
               >
-                <CategorySticker
-                  category={category.name}
-                  color={category.color}
-                  selected={field.value === category.name}
-                  onClick={() => field.onChange(category.name)}
-                />
+                <div 
+                  onClick={() => {
+                    console.log("Category selected:", category.name);
+                    field.onChange(category.name);
+                  }}
+                  className="w-full cursor-pointer"
+                >
+                  <CategorySticker
+                    category={category.name}
+                    color={category.color}
+                    selected={field.value === category.name}
+                  />
+                </div>
                 <span className="text-xs font-medium text-center">
                   {category.name}
                 </span>

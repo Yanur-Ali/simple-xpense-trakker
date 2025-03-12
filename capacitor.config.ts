@@ -16,6 +16,12 @@ const config: CapacitorConfig = {
       showSpinner: true,
       spinnerColor: "#999999"
     }
+  },
+  ios: {
+    contentInset: "always"
+  },
+  android: {
+    allowMixedContent: true
   }
 };
 
