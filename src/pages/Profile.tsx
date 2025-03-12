@@ -8,6 +8,7 @@ import { Check, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
+import { useUser } from "@/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -60,11 +61,12 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 const Profile = () => {
   const { theme, setTheme } = useTheme();
+  const { name, email, currency, updateUserPreferences } = useUser();
   
   const defaultValues: Partial<ProfileFormValues> = {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    currency: "USD",
+    name,
+    email,
+    currency,
     theme: theme as "light" | "dark" | "system",
   };
   
@@ -80,6 +82,14 @@ const Profile = () => {
     if (data.theme !== theme) {
       setTheme(data.theme);
     }
+    
+    // Update user preferences in context
+    updateUserPreferences({
+      name: data.name,
+      email: data.email,
+      currency: data.currency,
+      theme: data.theme,
+    });
     
     // Show success toast
     toast.success("Profile updated successfully!");

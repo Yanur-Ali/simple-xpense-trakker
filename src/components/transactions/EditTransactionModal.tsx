@@ -4,8 +4,9 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { DollarSign, X } from "lucide-react";
+import { X } from "lucide-react";
 
+import { useUser } from "@/contexts/UserContext";
 import { Transaction } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ const EditTransactionModal = ({
   onSave,
 }: EditTransactionModalProps) => {
   const [transactionType, setTransactionType] = useState<"expense" | "income">("expense");
+  const { currencySymbol } = useUser();
 
   const form = useForm<TransactionForm>({
     resolver: zodResolver(transactionSchema),
@@ -111,7 +113,9 @@ const EditTransactionModal = ({
                     <FormLabel>Amount</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          {currencySymbol}
+                        </span>
                         <Input
                           {...field}
                           type="number"
