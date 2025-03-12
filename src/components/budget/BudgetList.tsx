@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 interface BudgetListProps {
   budgets: Budget[];
-  onEditBudget: (id: string) => void;
+  onEditBudget: (updatedBudget: Budget) => void;
   onDeleteBudget: (id: string) => void;
 }
 

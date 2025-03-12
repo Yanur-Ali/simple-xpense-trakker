@@ -2,12 +2,13 @@
 import { Budget } from "@/lib/types";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { EditBudgetDialog } from "./EditBudgetDialog";
 
 interface BudgetItemProps {
   budget: Budget;
-  onEdit: (id: string) => void;
+  onEdit: (updatedBudget: Budget) => void;
   onDelete: (id: string) => void;
 }
 
@@ -33,14 +34,10 @@ export const BudgetItem = ({ budget, onEdit, onDelete }: BudgetItemProps) => {
             ${budget.currentUsage.toFixed(2)} / ${budget.amount.toFixed(2)}
           </span>
           <div className="flex gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7"
-              onClick={() => onEdit(budget.id)}
-            >
-              <Edit className="h-3.5 w-3.5" />
-            </Button>
+            <EditBudgetDialog 
+              budget={budget}
+              onSaveBudget={onEdit}
+            />
             <Button 
               variant="ghost" 
               size="icon" 

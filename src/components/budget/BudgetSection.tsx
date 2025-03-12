@@ -39,12 +39,10 @@ export const BudgetSection = () => {
     setBudgets([...budgets, newBudget]);
   };
 
-  const handleEditBudget = (id: string) => {
-    // For now, just show a toast - edit functionality can be implemented later
-    toast({
-      title: "Edit budget",
-      description: `Editing budget ${id}`
-    });
+  const handleEditBudget = (updatedBudget: Budget) => {
+    setBudgets(budgets.map(budget => 
+      budget.id === updatedBudget.id ? updatedBudget : budget
+    ));
   };
 
   const handleDeleteBudget = (id: string) => {
