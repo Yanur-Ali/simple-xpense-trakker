@@ -41,11 +41,16 @@ export const BudgetSection = () => {
             
           if (usageError) throw usageError;
           
+          // Ensure period is one of the valid types
+          const periodValue = (item.period === 'daily' || item.period === 'weekly' || item.period === 'monthly') 
+            ? item.period as 'daily' | 'weekly' | 'monthly'
+            : 'monthly'; // Default fallback
+          
           return {
             id: item.id,
             category: item.categories.name,
             amount: Number(item.amount),
-            period: item.period,
+            period: periodValue,
             currentUsage: Number(usageData || 0)
           };
         }));
