@@ -2,20 +2,24 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // Auto-redirect after a timeout (simulating a splash screen)
-    const timer = setTimeout(() => {
-      navigate("/dashboard");
-    }, 3000);
+    // Auto-redirect after a timeout only if already authenticated
+    if (isAuthenticated) {
+      const timer = setTimeout(() => {
+        navigate("/dashboard");
+      }, 3000);
 
-    return () => clearTimeout(timer);
-  }, [navigate]);
+      return () => clearTimeout(timer);
+    }
+  }, [navigate, isAuthenticated]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-secondary/50">
@@ -74,16 +78,38 @@ const Index = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8, duration: 0.5 }}
-          className="mt-10"
+          className="mt-10 flex flex-col sm:flex-row gap-4 justify-center"
         >
-          <Button 
-            size="lg" 
-            onClick={() => navigate("/dashboard")}
-            className="px-8 gap-2 group"
-          >
-            Get Started
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Button>
+          {isAuthenticated ? (
+            <Button 
+              size="lg" 
+              onClick={() => navigate("/dashboard")}
+              className="px-8 gap-2 group"
+            >
+              Dashboard
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          ) : (
+            <>
+              <Button 
+                size="lg" 
+                onClick={() => navigate("/login")}
+                className="px-8 gap-2 group"
+              >
+                Sign In
+                <LogIn className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => navigate("/register")}
+                className="px-8 gap-2 group"
+              >
+                Sign Up
+                <UserPlus className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </>
+          )}
         </motion.div>
       </motion.div>
     </div>
