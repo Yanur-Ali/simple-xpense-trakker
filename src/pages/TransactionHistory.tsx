@@ -1,25 +1,15 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Filter, Search } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-import { TransactionCard } from "@/components/ui/transaction-card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import EditTransactionModal from "@/components/transactions/EditTransactionModal";
+import SearchBar from "@/components/transactions/SearchBar";
+import TransactionFilters from "@/components/transactions/TransactionFilters";
+import TransactionsList from "@/components/transactions/TransactionsList";
+import DeleteDialog from "@/components/transactions/DeleteDialog";
 import { Transaction } from "@/lib/types";
 
 // Sample transactions data - would come from a database in a real app
@@ -147,29 +137,15 @@ const TransactionHistory = () => {
       </motion.div>
       
       <motion.div variants={itemVariants} className="space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search transactions..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        <SearchBar 
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        />
         
-        <div className="flex items-center justify-between">
-          <Tabs defaultValue="all" className="w-full" onValueChange={setTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="expense">Expenses</TabsTrigger>
-              <TabsTrigger value="income">Income</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
-          <Button variant="outline" size="icon" className="ml-2">
-            <Filter className="h-4 w-4" />
-          </Button>
-        </div>
+        <TransactionFilters 
+          tab={tab}
+          setTab={setTab}
+        />
 
         <div className="text-sm text-muted-foreground flex items-center gap-1.5 mt-4">
           <Calendar className="h-4 w-4" />
@@ -177,23 +153,11 @@ const TransactionHistory = () => {
         </div>
       </motion.div>
       
-      <motion.div variants={itemVariants} className="mt-4 space-y-3">
-        {filteredTransactions.length > 0 ? (
-          filteredTransactions.map((transaction) => (
-            <TransactionCard
-              key={transaction.id}
-              transaction={transaction}
-              currency="$"
-              onEdit={handleEditTransaction}
-              onDelete={handleDeleteClick}
-            />
-          ))
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            No transactions found
-          </div>
-        )}
-      </motion.div>
+      <TransactionsList 
+        transactions={filteredTransactions}
+        onEdit={handleEditTransaction}
+        onDelete={handleDeleteClick}
+      />
 
       {/* Edit Transaction Modal */}
       <EditTransactionModal
@@ -204,22 +168,11 @@ const TransactionHistory = () => {
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the transaction.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteDialog 
+        isOpen={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+      />
     </motion.div>
   );
 };
