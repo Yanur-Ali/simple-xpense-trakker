@@ -36,20 +36,24 @@ const CategorySelector = ({ form, transactionType }: CategorySelectorProps) => {
             {filteredCategories.map((category) => (
               <div 
                 key={category.id} 
-                className="flex flex-col items-center gap-1"
+                className={`flex flex-col items-center gap-1 p-1 rounded-lg transition-all ${
+                  field.value === category.name ? "bg-primary/10 transform scale-105" : ""
+                }`}
                 onClick={() => {
                   console.log("Category selected:", category.name);
                   field.onChange(category.name);
                 }}
               >
-                <div className="w-full cursor-pointer">
+                <div className="w-full cursor-pointer flex justify-center">
                   <CategorySticker
                     category={category.name}
                     color={category.color}
                     selected={field.value === category.name}
                   />
                 </div>
-                <span className="text-xs font-medium text-center">
+                <span className={`text-xs text-center font-medium truncate w-full ${
+                  field.value === category.name ? "text-primary font-semibold" : ""
+                }`}>
                   {category.name}
                 </span>
               </div>
