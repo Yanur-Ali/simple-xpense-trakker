@@ -1,20 +1,129 @@
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { BalanceCard } from "@/components/ui/balance-card";
 import { TransactionCard } from "@/components/ui/transaction-card";
 import { ExpenseChart } from "@/components/ui/expense-chart";
 import { BudgetSection } from "@/components/budget/BudgetSection";
-import { getExpenseData, getTotalBalance, sampleTransactions } from "@/lib/sample-data";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Dashboard = () => {
-  const { income, expenses } = getTotalBalance();
-  const totalBalance = income - expenses;
-  const expenseData = getExpenseData();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [income, setIncome] = useState(0);
+  const [expenses, setExpenses] = useState(0);
+  const [expenseData, setExpenseData] = useState<any[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
   
-  // Get recent transactions (last 5)
-  const recentTransactions = [...sampleTransactions]
-    .sort((a, b) => b.date.getTime() - a.date.getTime())
-    .slice(0, 5);
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      try {
+        // Fetch income total
+        const { data: incomeData, error: incomeError } = await supabase
+          .from('transactions')
+          .select('amount')
+          .eq('user_id', user.id)
+          .eq('type', 'income');
+          
+        if (incomeError) throw incomeError;
+        
+        // Fetch expense total
+        const { data: expenseData, error: expenseError } = await supabase
+          .from('transactions')
+          .select('amount')
+          .eq('user_id', user.id)
+          .eq('type', 'expense');
+          
+        if (expenseError) throw expenseError;
+        
+        // Calculate totals
+        const totalIncome = incomeData.reduce((sum, item) => sum + Number(item.amount), 0);
+        const totalExpenses = expenseData.reduce((sum, item) => sum + Number(item.amount), 0);
+        
+        setIncome(totalIncome);
+        setExpenses(totalExpenses);
+        
+        // Fetch expense data grouped by category
+        const { data: expenseByCategoryData, error: categoryError } = await supabase
+          .from('transactions')
+          .select('amount, categories(name, color)')
+          .eq('user_id', user.id)
+          .eq('type', 'expense');
+          
+        if (categoryError) throw categoryError;
+        
+        // Process expense by category for chart
+        const categoryMap = new Map();
+        
+        expenseByCategoryData.forEach(item => {
+          const category = item.categories.name;
+          const color = item.categories.color;
+          const amount = Number(item.amount);
+          
+          if (categoryMap.has(category)) {
+            categoryMap.set(category, {
+              value: categoryMap.get(category).value + amount,
+              color: color
+            });
+          } else {
+            categoryMap.set(category, { value: amount, color: color });
+          }
+        });
+        
+        const chartData = Array.from(categoryMap.entries()).map(([category, data]) => ({
+          category,
+          value: data.value,
+          color: data.color
+        }));
+        
+        setExpenseData(chartData);
+        
+        // Fetch recent transactions
+        const { data: recentData, error: recentError } = await supabase
+          .from('transactions')
+          .select(`
+            id, 
+            type, 
+            amount, 
+            date, 
+            note,
+            categories(name)
+          `)
+          .eq('user_id', user.id)
+          .order('date', { ascending: false })
+          .limit(5);
+          
+        if (recentError) throw recentError;
+        
+        // Format recent transactions
+        const formattedRecent = recentData.map(item => ({
+          id: item.id,
+          type: item.type,
+          amount: Number(item.amount),
+          category: item.categories.name,
+          date: new Date(item.date),
+          note: item.note
+        }));
+        
+        setRecentTransactions(formattedRecent);
+        
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        toast.error("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDashboardData();
+  }, [user]);
+  
+  const totalBalance = income - expenses;
   
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -78,13 +187,24 @@ const Dashboard = () => {
         </div>
         
         <div className="space-y-2">
-          {recentTransactions.map((transaction) => (
-            <TransactionCard 
-              key={transaction.id}
-              transaction={transaction}
-              currency="$"
-            />
-          ))}
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <p className="text-muted-foreground">Loading transactions...</p>
+            </div>
+          ) : recentTransactions.length > 0 ? (
+            recentTransactions.map((transaction) => (
+              <TransactionCard 
+                key={transaction.id}
+                transaction={transaction}
+                currency="$"
+              />
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No transactions yet</p>
+              <p className="text-sm mt-1">Add your first transaction to get started</p>
+            </div>
+          )}
         </div>
       </motion.div>
     </motion.div>
