@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar } from "lucide-react";
+import { Calendar, Download } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -10,7 +10,9 @@ import SearchBar from "@/components/transactions/SearchBar";
 import TransactionFilters from "@/components/transactions/TransactionFilters";
 import TransactionsList from "@/components/transactions/TransactionsList";
 import DeleteDialog from "@/components/transactions/DeleteDialog";
+import ClearHistoryDialog from "@/components/transactions/ClearHistoryDialog";
 import { Transaction } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 
 // Sample transactions data - would come from a database in a real app
 const sampleTransactions: Transaction[] = [
@@ -79,6 +81,7 @@ const TransactionHistory = () => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
   
   // Filter transactions based on tab and search query
@@ -122,6 +125,47 @@ const TransactionHistory = () => {
     }
   };
 
+  const handleClearHistory = () => {
+    setClearHistoryDialogOpen(true);
+  };
+
+  const confirmClearHistory = () => {
+    setTransactions([]);
+    toast.success("Transaction history cleared successfully");
+    setClearHistoryDialogOpen(false);
+  };
+
+  const handleExportTransactions = () => {
+    try {
+      // Convert transactions to JSON string
+      const dataStr = JSON.stringify(transactions, null, 2);
+      
+      // Create a Blob with the data
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      
+      // Create a URL for the Blob
+      const url = URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `transactions-${format(new Date(), 'yyyy-MM-dd')}.json`;
+      
+      // Append to the body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL object
+      URL.revokeObjectURL(url);
+      
+      toast.success("Transactions exported successfully");
+    } catch (error) {
+      console.error("Error exporting transactions:", error);
+      toast.error("Failed to export transactions");
+    }
+  };
+
   return (
     <motion.div
       initial="hidden"
@@ -130,7 +174,19 @@ const TransactionHistory = () => {
       className="max-w-md mx-auto pb-6"
     >
       <motion.div variants={itemVariants} className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Transaction History</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold tracking-tight">Transaction History</h1>
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={handleExportTransactions}
+              title="Export Transactions"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
         <p className="text-muted-foreground mt-1">
           View and search your past transactions
         </p>
@@ -145,6 +201,7 @@ const TransactionHistory = () => {
         <TransactionFilters 
           tab={tab}
           setTab={setTab}
+          onClearHistory={handleClearHistory}
         />
 
         <div className="text-sm text-muted-foreground flex items-center gap-1.5 mt-4">
@@ -172,6 +229,13 @@ const TransactionHistory = () => {
         isOpen={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={confirmDelete}
+      />
+
+      {/* Clear History Confirmation Dialog */}
+      <ClearHistoryDialog
+        isOpen={clearHistoryDialogOpen}
+        onOpenChange={setClearHistoryDialogOpen}
+        onConfirm={confirmClearHistory}
       />
     </motion.div>
   );
