@@ -8,14 +8,20 @@ import { User } from "@supabase/supabase-js";
 export function useBudgets(user: User | null) {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     
     const fetchBudgets = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
         const { data, error } = await supabase
           .from('budgets')
           .select(`
@@ -51,8 +57,9 @@ export function useBudgets(user: User | null) {
         }));
         
         setBudgets(formattedBudgets);
-      } catch (error) {
-        console.error("Error fetching budgets:", error);
+      } catch (err) {
+        console.error("Error fetching budgets:", err);
+        setError(err instanceof Error ? err : new Error('Unknown error occurred'));
         toast({
           title: "Failed to load budgets",
           description: "Please try again later",
@@ -94,20 +101,23 @@ export function useBudgets(user: User | null) {
       if (error) throw error;
       
       // Add to state with usage at 0
-      setBudgets([...budgets, {
-        id: data.id,
-        category: newBudget.category,
-        amount: newBudget.amount,
-        period: newBudget.period,
-        currentUsage: 0
-      }]);
+      setBudgets((prevBudgets) => [
+        ...prevBudgets, 
+        {
+          id: data.id,
+          category: newBudget.category,
+          amount: newBudget.amount,
+          period: newBudget.period,
+          currentUsage: 0
+        }
+      ]);
       
       toast({
         title: "Budget added",
         description: "Budget has been added successfully"
       });
-    } catch (error) {
-      console.error("Error adding budget:", error);
+    } catch (err) {
+      console.error("Error adding budget:", err);
       toast({
         title: "Failed to add budget",
         description: "Please try again later",
@@ -143,16 +153,18 @@ export function useBudgets(user: User | null) {
       if (error) throw error;
       
       // Update state
-      setBudgets(budgets.map(budget => 
-        budget.id === updatedBudget.id ? updatedBudget : budget
-      ));
+      setBudgets((prevBudgets) => 
+        prevBudgets.map(budget => 
+          budget.id === updatedBudget.id ? updatedBudget : budget
+        )
+      );
       
       toast({
         title: "Budget updated",
         description: "Budget has been updated successfully"
       });
-    } catch (error) {
-      console.error("Error updating budget:", error);
+    } catch (err) {
+      console.error("Error updating budget:", err);
       toast({
         title: "Failed to update budget",
         description: "Please try again later",
@@ -174,14 +186,16 @@ export function useBudgets(user: User | null) {
       if (error) throw error;
       
       // Update state
-      setBudgets(budgets.filter(budget => budget.id !== id));
+      setBudgets((prevBudgets) => 
+        prevBudgets.filter(budget => budget.id !== id)
+      );
       
       toast({
         title: "Budget deleted",
         description: "Budget has been removed successfully"
       });
-    } catch (error) {
-      console.error("Error deleting budget:", error);
+    } catch (err) {
+      console.error("Error deleting budget:", err);
       toast({
         title: "Failed to delete budget",
         description: "Please try again later",
@@ -193,6 +207,7 @@ export function useBudgets(user: User | null) {
   return {
     budgets,
     loading,
+    error,
     addBudget,
     editBudget,
     deleteBudget
