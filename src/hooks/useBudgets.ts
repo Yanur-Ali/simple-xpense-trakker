@@ -2,10 +2,11 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Budget } from "@/lib/types";
+import { Budget, AppUser } from "@/lib/types";
 import { User } from "@supabase/supabase-js";
 
-export function useBudgets(user: User | null) {
+// Accept either Supabase User or our AppUser type
+export function useBudgets(user: User | AppUser | null) {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);

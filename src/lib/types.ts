@@ -1,3 +1,4 @@
+
 export interface Transaction {
   id: string;
   type: "expense" | "income";
@@ -15,7 +16,8 @@ export interface ExpenseCategory {
   sticker?: string;
 }
 
-export interface User {
+// Rename this to AppUser to avoid conflicts with Supabase User
+export interface AppUser {
   id: string;
   name: string;
   email: string;
