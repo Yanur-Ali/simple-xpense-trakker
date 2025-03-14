@@ -6,11 +6,10 @@ import { BudgetList } from "./BudgetList";
 import { LoadingState } from "./LoadingState";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBudgets } from "@/hooks/useBudgets";
-import { User } from "@supabase/supabase-js"; // Import the correct User type
 
 export const BudgetSection = () => {
   const { user } = useAuth();
-  const { budgets, loading, addBudget, editBudget, deleteBudget } = useBudgets(user as User | null);
+  const { budgets, loading, addBudget, editBudget, deleteBudget } = useBudgets(user);
 
   return (
     <motion.div

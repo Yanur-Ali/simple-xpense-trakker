@@ -23,6 +23,27 @@ export function useBudgets(user: User | AppUser | null) {
         setLoading(true);
         setError(null);
         
+        // For now, handle the mock data case for local development
+        if ('theme' in user) {
+          // This is our AppUser type, use mock data
+          console.log("Using mock data for AppUser");
+          // Simulate loading
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Get mock budgets from localStorage if available
+          const storedBudgets = localStorage.getItem(`budgets-${user.id}`);
+          if (storedBudgets) {
+            setBudgets(JSON.parse(storedBudgets));
+          } else {
+            // Default empty state
+            setBudgets([]);
+          }
+          
+          setLoading(false);
+          return;
+        }
+        
+        // Continue with Supabase fetch for real User type
         const { data, error } = await supabase
           .from('budgets')
           .select(`
@@ -78,6 +99,33 @@ export function useBudgets(user: User | AppUser | null) {
     if (!user) return;
     
     try {
+      // If AppUser, use localStorage mock
+      if ('theme' in user) {
+        // Generate a unique ID
+        const budgetId = `budget-${Date.now()}`;
+        const newBudgetWithId = {
+          ...newBudget,
+          id: budgetId,
+          currentUsage: 0
+        };
+        
+        // Update state
+        setBudgets(prevBudgets => {
+          const updatedBudgets = [...prevBudgets, newBudgetWithId];
+          // Save to localStorage
+          localStorage.setItem(`budgets-${user.id}`, JSON.stringify(updatedBudgets));
+          return updatedBudgets;
+        });
+        
+        toast({
+          title: "Budget added",
+          description: "Budget has been added successfully"
+        });
+        
+        return;
+      }
+      
+      // Else use Supabase
       // Get category_id from name
       const { data: categoryData, error: categoryError } = await supabase
         .from('categories')
@@ -131,6 +179,27 @@ export function useBudgets(user: User | AppUser | null) {
     if (!user) return;
     
     try {
+      // If AppUser, use localStorage mock
+      if ('theme' in user) {
+        // Update state
+        setBudgets(prevBudgets => {
+          const updatedBudgets = prevBudgets.map(budget => 
+            budget.id === updatedBudget.id ? updatedBudget : budget
+          );
+          // Save to localStorage
+          localStorage.setItem(`budgets-${user.id}`, JSON.stringify(updatedBudgets));
+          return updatedBudgets;
+        });
+        
+        toast({
+          title: "Budget updated",
+          description: "Budget has been updated successfully"
+        });
+        
+        return;
+      }
+      
+      // Else use Supabase
       // Get category_id from name
       const { data: categoryData, error: categoryError } = await supabase
         .from('categories')
@@ -178,6 +247,25 @@ export function useBudgets(user: User | AppUser | null) {
     if (!user) return;
     
     try {
+      // If AppUser, use localStorage mock
+      if ('theme' in user) {
+        // Update state
+        setBudgets(prevBudgets => {
+          const updatedBudgets = prevBudgets.filter(budget => budget.id !== id);
+          // Save to localStorage
+          localStorage.setItem(`budgets-${user.id}`, JSON.stringify(updatedBudgets));
+          return updatedBudgets;
+        });
+        
+        toast({
+          title: "Budget deleted",
+          description: "Budget has been removed successfully"
+        });
+        
+        return;
+      }
+      
+      // Else use Supabase
       const { error } = await supabase
         .from('budgets')
         .delete()
