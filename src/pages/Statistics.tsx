@@ -14,7 +14,7 @@ import {
   Legend
 } from "recharts";
 
-import { sampleTransactions } from "@/lib/sample-data";
+import { getTransactions, getExpenseData, initializeTransactions } from "@/lib/sample-data";
 import { shortFormatDate } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +23,12 @@ import { ExpenseChart, ExpenseData } from "@/components/ui/expense-chart";
 
 // Convert sample data to chart data
 const processChartData = () => {
+  // Initialize transactions if needed
+  initializeTransactions(false);
+  
+  // Get transactions from global store
+  const transactions = getTransactions();
+  
   // Group transactions by date for the last 14 days
   const today = new Date();
   const twoWeeksAgo = new Date();
@@ -36,7 +42,7 @@ const processChartData = () => {
   
   return lastTwoWeeks.map(date => {
     const dateStr = date.toISOString().split('T')[0];
-    const dayTransactions = sampleTransactions.filter(t => 
+    const dayTransactions = transactions.filter(t => 
       t.date.toISOString().split('T')[0] === dateStr
     );
     
@@ -54,8 +60,14 @@ const processChartData = () => {
 
 // Process category data
 const processCategoryData = (): ExpenseData[] => {
+  // Initialize transactions if needed
+  initializeTransactions(false);
+  
+  // Get transactions from global store
+  const transactions = getTransactions();
+  
   // Group expenses by category
-  const expensesByCategory = sampleTransactions
+  const expensesByCategory = transactions
     .filter(t => t.type === "expense")
     .reduce((acc, transaction) => {
       const existingCategory = acc.find(item => item.category === transaction.category);
@@ -87,6 +99,8 @@ const getCategoryColor = (category: string): string => {
     "Bills": "#3A86FF",
     "Education": "#8338EC",
     "Travel": "#FB5607",
+    "Salary": "#09D6A0",
+    "Investments": "#118AB2",
   };
   
   return colors[category] || "#808080";
