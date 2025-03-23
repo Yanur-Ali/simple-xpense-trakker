@@ -44,11 +44,13 @@ export function ExpenseChart({ data, className }: ExpenseChartProps) {
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
+      const item = payload[0];
+      const percentage = item.payload.percent * 100;
       return (
         <div className="bg-card p-3 border border-border rounded-lg shadow-sm">
-          <p className="font-medium mb-1">{payload[0].name}</p>
+          <p className="font-medium mb-1">{item.name}</p>
           <p className="text-sm text-muted-foreground">
-            ${payload[0].value.toFixed(2)} ({Math.round(payload[0].payload.percent * 100)}%)
+            ${item.value.toFixed(2)} ({percentage.toFixed(1)}%)
           </p>
         </div>
       );
@@ -75,9 +77,11 @@ export function ExpenseChart({ data, className }: ExpenseChartProps) {
                 nameKey="category"
                 isAnimationActive={true}
                 animationDuration={800}
-                label={({ name, payload }) => 
-                  animationFinished ? `${name} ${(payload.percent * 100).toFixed(0)}%` : ''
-                }
+                label={({ name, payload }) => {
+                  if (!animationFinished) return '';
+                  const percent = payload.percent * 100;
+                  return `${name} ${percent.toFixed(1)}%`;
+                }}
                 labelLine={false}
               >
                 {dataWithPercentage.map((entry, index) => (
