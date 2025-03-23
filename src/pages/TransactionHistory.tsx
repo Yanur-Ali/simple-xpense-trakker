@@ -83,6 +83,7 @@ const TransactionHistory = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
+  const [isClearingHistory, setIsClearingHistory] = useState(false);
   
   // Filter transactions based on tab and search query
   const filteredTransactions = transactions
@@ -129,10 +130,21 @@ const TransactionHistory = () => {
     setClearHistoryDialogOpen(true);
   };
 
-  const confirmClearHistory = () => {
-    setTransactions([]);
-    toast.success("Transaction history cleared successfully");
-    setClearHistoryDialogOpen(false);
+  const confirmClearHistory = async () => {
+    try {
+      setIsClearingHistory(true);
+      // Simulate API call with timeout
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setTransactions([]);
+      toast.success("Transaction history cleared successfully");
+    } catch (error) {
+      console.error("Error clearing history:", error);
+      toast.error("Failed to clear transaction history");
+    } finally {
+      setIsClearingHistory(false);
+      setClearHistoryDialogOpen(false);
+    }
   };
 
   const handleExportTransactions = () => {
@@ -236,6 +248,7 @@ const TransactionHistory = () => {
         isOpen={clearHistoryDialogOpen}
         onOpenChange={setClearHistoryDialogOpen}
         onConfirm={confirmClearHistory}
+        isClearing={isClearingHistory}
       />
     </motion.div>
   );

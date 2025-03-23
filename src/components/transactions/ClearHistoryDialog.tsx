@@ -8,42 +8,26 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { Loader2, Trash2 } from "lucide-react";
 
 interface ClearHistoryDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
+  isClearing?: boolean;
 }
 
-const ClearHistoryDialog = ({ isOpen, onOpenChange, onConfirm }: ClearHistoryDialogProps) => {
-  const [isClearing, setIsClearing] = useState(false);
-  const { toast } = useToast();
-
-  const handleConfirm = async () => {
-    try {
-      setIsClearing(true);
-      await onConfirm();
-      toast({
-        title: "History cleared",
-        description: "All transaction records have been deleted successfully.",
-      });
-    } catch (error) {
-      console.error("Error clearing history:", error);
-      toast({
-        title: "Failed to clear history",
-        description: "An error occurred while clearing transaction history.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsClearing(false);
-      onOpenChange(false);
-    }
+const ClearHistoryDialog = ({ 
+  isOpen, 
+  onOpenChange, 
+  onConfirm, 
+  isClearing = false 
+}: ClearHistoryDialogProps) => {
+  const handleConfirm = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await onConfirm();
   };
 
   return (
@@ -63,7 +47,10 @@ const ClearHistoryDialog = ({ isOpen, onOpenChange, onConfirm }: ClearHistoryDia
             disabled={isClearing}
           >
             {isClearing ? (
-              <>Clearing...</>
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Clearing...
+              </>
             ) : (
               <>
                 <Trash2 className="h-4 w-4" />
