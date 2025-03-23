@@ -24,6 +24,15 @@ interface ExpenseChartProps {
 export function ExpenseChart({ data, className }: ExpenseChartProps) {
   const [animationFinished, setAnimationFinished] = useState(false);
   const hasData = data.length > 0;
+  
+  // Calculate the total value for percentage calculations
+  const totalValue = data.reduce((sum, item) => sum + item.value, 0);
+  
+  // Add percentage to each data item
+  const dataWithPercentage = data.map(item => ({
+    ...item,
+    percent: totalValue > 0 ? (item.value / totalValue) : 0
+  }));
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -39,7 +48,7 @@ export function ExpenseChart({ data, className }: ExpenseChartProps) {
         <div className="bg-card p-3 border border-border rounded-lg shadow-sm">
           <p className="font-medium mb-1">{payload[0].name}</p>
           <p className="text-sm text-muted-foreground">
-            ${payload[0].value.toFixed(2)} ({Math.round(payload[0].percent * 100)}%)
+            ${payload[0].value.toFixed(2)} ({Math.round(payload[0].payload.percent * 100)}%)
           </p>
         </div>
       );
@@ -56,7 +65,7 @@ export function ExpenseChart({ data, className }: ExpenseChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={data}
+                data={dataWithPercentage}
                 cx="50%"
                 cy="50%"
                 innerRadius={70}
@@ -66,12 +75,12 @@ export function ExpenseChart({ data, className }: ExpenseChartProps) {
                 nameKey="category"
                 isAnimationActive={true}
                 animationDuration={800}
-                label={({ name, percent }) => 
-                  animationFinished ? `${name} ${(percent * 100).toFixed(0)}%` : ''
+                label={({ name, payload }) => 
+                  animationFinished ? `${name} ${(payload.percent * 100).toFixed(0)}%` : ''
                 }
                 labelLine={false}
               >
-                {data.map((entry, index) => (
+                {dataWithPercentage.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
