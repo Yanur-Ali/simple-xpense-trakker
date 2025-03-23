@@ -8,6 +8,8 @@ import { BudgetSection } from "@/components/budget/BudgetSection";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Transaction } from "@/lib/types";
+import { getTransactions, getExpenseData, getTotalBalance, initializeTransactions } from "@/lib/sample-data";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -15,102 +17,31 @@ const Dashboard = () => {
   const [income, setIncome] = useState(0);
   const [expenses, setExpenses] = useState(0);
   const [expenseData, setExpenseData] = useState<any[]>([]);
-  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   
   useEffect(() => {
-    if (!user) return;
-    
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        // Fetch income total
-        const { data: incomeData, error: incomeError } = await supabase
-          .from('transactions')
-          .select('amount')
-          .eq('user_id', user.id)
-          .eq('type', 'income');
-          
-        if (incomeError) throw incomeError;
+        // Initialize with empty data by default (don't use sample data)
+        initializeTransactions(false);
         
-        // Fetch expense total
-        const { data: expenseData, error: expenseError } = await supabase
-          .from('transactions')
-          .select('amount')
-          .eq('user_id', user.id)
-          .eq('type', 'expense');
-          
-        if (expenseError) throw expenseError;
+        // Get transactions from global store
+        const allTransactions = getTransactions();
         
-        // Calculate totals
-        const totalIncome = incomeData.reduce((sum, item) => sum + Number(item.amount), 0);
-        const totalExpenses = expenseData.reduce((sum, item) => sum + Number(item.amount), 0);
+        // Calculate income/expense totals
+        const balance = getTotalBalance();
+        setIncome(balance.income);
+        setExpenses(balance.expenses);
         
-        setIncome(totalIncome);
-        setExpenses(totalExpenses);
+        // Get expense data for chart
+        setExpenseData(getExpenseData());
         
-        // Fetch expense data grouped by category
-        const { data: expenseByCategoryData, error: categoryError } = await supabase
-          .from('transactions')
-          .select('amount, categories(name, color)')
-          .eq('user_id', user.id)
-          .eq('type', 'expense');
-          
-        if (categoryError) throw categoryError;
-        
-        // Process expense by category for chart
-        const categoryMap = new Map();
-        
-        expenseByCategoryData.forEach(item => {
-          const category = item.categories.name;
-          const color = item.categories.color;
-          const amount = Number(item.amount);
-          
-          if (categoryMap.has(category)) {
-            categoryMap.set(category, {
-              value: categoryMap.get(category).value + amount,
-              color: color
-            });
-          } else {
-            categoryMap.set(category, { value: amount, color: color });
-          }
-        });
-        
-        const chartData = Array.from(categoryMap.entries()).map(([category, data]) => ({
-          category,
-          value: data.value,
-          color: data.color
-        }));
-        
-        setExpenseData(chartData);
-        
-        // Fetch recent transactions
-        const { data: recentData, error: recentError } = await supabase
-          .from('transactions')
-          .select(`
-            id, 
-            type, 
-            amount, 
-            date, 
-            note,
-            categories(name)
-          `)
-          .eq('user_id', user.id)
-          .order('date', { ascending: false })
-          .limit(5);
-          
-        if (recentError) throw recentError;
-        
-        // Format recent transactions
-        const formattedRecent = recentData.map(item => ({
-          id: item.id,
-          type: item.type,
-          amount: Number(item.amount),
-          category: item.categories.name,
-          date: new Date(item.date),
-          note: item.note
-        }));
-        
-        setRecentTransactions(formattedRecent);
+        // Get recent transactions (last 5)
+        const sortedTransactions = [...allTransactions].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        setRecentTransactions(sortedTransactions.slice(0, 5));
         
       } catch (error) {
         console.error("Error fetching dashboard data:", error);

@@ -14,70 +14,101 @@ export const sampleCategories: ExpenseCategory[] = [
   { id: "10", name: "Investments", color: "#118AB2" },
 ];
 
-export const sampleTransactions: Transaction[] = [
-  {
-    id: "t1",
-    type: "expense",
-    amount: 25.50,
-    category: "Food",
-    date: new Date(2023, 6, 1),
-    note: "Dinner with friends",
-  },
-  {
-    id: "t2",
-    type: "expense",
-    amount: 15.00,
-    category: "Transport",
-    date: new Date(2023, 6, 2),
-  },
-  {
-    id: "t3",
-    type: "income",
-    amount: 2000.00,
-    category: "Salary",
-    date: new Date(2023, 6, 3),
-  },
-  {
-    id: "t4",
-    type: "expense",
-    amount: 120.30,
-    category: "Shopping",
-    date: new Date(2023, 6, 4),
-    note: "New shoes",
-  },
-  {
-    id: "t5",
-    type: "expense",
-    amount: 50.00,
-    category: "Entertainment",
-    date: new Date(2023, 6, 5),
-    note: "Movie tickets and popcorn",
-  },
-  {
-    id: "t6",
-    type: "expense",
-    amount: 200.00,
-    category: "Bills",
-    date: new Date(2023, 6, 6),
-    note: "Electricity bill",
-  },
-  {
-    id: "t7",
-    type: "income",
-    amount: 500.00,
-    category: "Investments",
-    date: new Date(2023, 6, 7),
-    note: "Dividend payment",
-  },
-  {
-    id: "t8",
-    type: "expense",
-    amount: 75.50,
-    category: "Health",
-    date: new Date(2023, 6, 8),
-    note: "Pharmacy",
-  },
-];
+// We'll use this transactions array globally to store all transactions
+let globalTransactions: Transaction[] = [];
+
+// Function to initialize with sample data if needed
+export const initializeTransactions = (useSampleData: boolean = false) => {
+  if (useSampleData && globalTransactions.length === 0) {
+    // Only initialize with sample data if requested and array is empty
+    globalTransactions = [
+      {
+        id: "t1",
+        type: "expense",
+        amount: 25.50,
+        category: "Food",
+        date: new Date(2023, 6, 1),
+        note: "Dinner with friends",
+      },
+      {
+        id: "t2",
+        type: "expense",
+        amount: 15.00,
+        category: "Transport",
+        date: new Date(2023, 6, 2),
+      },
+      {
+        id: "t3",
+        type: "income",
+        amount: 2000.00,
+        category: "Salary",
+        date: new Date(2023, 6, 3),
+      },
+      {
+        id: "t4",
+        type: "expense",
+        amount: 120.30,
+        category: "Shopping",
+        date: new Date(2023, 6, 4),
+        note: "New shoes",
+      },
+      {
+        id: "t5",
+        type: "expense",
+        amount: 50.00,
+        category: "Entertainment",
+        date: new Date(2023, 6, 5),
+        note: "Movie tickets and popcorn",
+      },
+      {
+        id: "t6",
+        type: "expense",
+        amount: 200.00,
+        category: "Bills",
+        date: new Date(2023, 6, 6),
+        note: "Electricity bill",
+      },
+      {
+        id: "t7",
+        type: "income",
+        amount: 500.00,
+        category: "Investments",
+        date: new Date(2023, 6, 7),
+        note: "Dividend payment",
+      },
+      {
+        id: "t8",
+        type: "expense",
+        amount: 75.50,
+        category: "Health",
+        date: new Date(2023, 6, 8),
+        note: "Pharmacy",
+      },
+    ];
+  }
+  return [...globalTransactions];
+};
+
+// Function to add a new transaction
+export const addTransaction = (transaction: Transaction) => {
+  // Generate a simple ID
+  const newTransaction = {
+    ...transaction,
+    id: `t${Date.now()}`
+  };
+  globalTransactions.push(newTransaction);
+  return newTransaction;
+};
+
+// Function to get all transactions
+export const getTransactions = () => {
+  return [...globalTransactions];
+};
+
+// Function to clear all transactions
+export const clearTransactions = () => {
+  globalTransactions = [];
+};
 
 export const sampleBudgets: Budget[] = [
   {
@@ -105,7 +136,7 @@ export const sampleBudgets: Budget[] = [
 
 export const getExpenseData = () => {
   // Filter transactions to only expenses
-  const expenses = sampleTransactions.filter(t => t.type === "expense");
+  const expenses = getTransactions().filter(t => t.type === "expense");
   
   // Group by category and calculate total per category
   const expensesByCategory = expenses.reduce((acc, transaction) => {
@@ -129,7 +160,7 @@ export const getExpenseData = () => {
 };
 
 export const getTotalBalance = () => {
-  return sampleTransactions.reduce(
+  return getTransactions().reduce(
     (acc, transaction) => {
       if (transaction.type === "income") {
         acc.income += transaction.amount;

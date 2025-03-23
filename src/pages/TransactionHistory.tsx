@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Download } from "lucide-react";
 import { format } from "date-fns";
@@ -13,49 +13,7 @@ import DeleteDialog from "@/components/transactions/DeleteDialog";
 import ClearHistoryDialog from "@/components/transactions/ClearHistoryDialog";
 import { Transaction } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-
-// Sample transactions data - would come from a database in a real app
-const sampleTransactions: Transaction[] = [
-  {
-    id: "1",
-    type: "expense",
-    amount: 12.99,
-    category: "Food",
-    date: new Date(2023, 6, 15),
-    note: "Lunch at Subway"
-  },
-  {
-    id: "2",
-    type: "expense",
-    amount: 45.50,
-    category: "Transport",
-    date: new Date(2023, 6, 14),
-    note: "Uber ride"
-  },
-  {
-    id: "3",
-    type: "income",
-    amount: 2000,
-    category: "Salary",
-    date: new Date(2023, 6, 10),
-  },
-  {
-    id: "4",
-    type: "expense",
-    amount: 9.99,
-    category: "Entertainment",
-    date: new Date(2023, 6, 8),
-    note: "Netflix subscription"
-  },
-  {
-    id: "5",
-    type: "expense",
-    amount: 35.25,
-    category: "Shopping",
-    date: new Date(2023, 6, 5),
-    note: "T-shirt"
-  }
-];
+import { getTransactions, clearTransactions } from "@/lib/sample-data";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -77,13 +35,18 @@ const itemVariants = {
 const TransactionHistory = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState("all");
-  const [transactions, setTransactions] = useState(sampleTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
   const [isClearingHistory, setIsClearingHistory] = useState(false);
+  
+  // Load transactions from global store on component mount
+  useEffect(() => {
+    setTransactions(getTransactions());
+  }, []);
   
   // Filter transactions based on tab and search query
   const filteredTransactions = transactions
@@ -106,9 +69,11 @@ const TransactionHistory = () => {
   };
 
   const handleSaveTransaction = (updatedTransaction: Transaction) => {
-    setTransactions(transactions.map(t => 
+    const updatedTransactions = transactions.map(t => 
       t.id === updatedTransaction.id ? updatedTransaction : t
-    ));
+    );
+    setTransactions(updatedTransactions);
+    // This is a local update only for now
     toast.success("Transaction updated successfully");
   };
 
@@ -119,7 +84,9 @@ const TransactionHistory = () => {
 
   const confirmDelete = () => {
     if (transactionToDelete) {
-      setTransactions(transactions.filter(t => t.id !== transactionToDelete.id));
+      const filteredTransactions = transactions.filter(t => t.id !== transactionToDelete.id);
+      setTransactions(filteredTransactions);
+      // This is a local update only for now
       toast.success("Transaction deleted successfully");
       setDeleteDialogOpen(false);
       setTransactionToDelete(null);
@@ -136,7 +103,10 @@ const TransactionHistory = () => {
       // Simulate API call with timeout
       await new Promise(resolve => setTimeout(resolve, 500));
       
+      // Clear both local state and global store
       setTransactions([]);
+      clearTransactions();
+      
       toast.success("Transaction history cleared successfully");
     } catch (error) {
       console.error("Error clearing history:", error);
