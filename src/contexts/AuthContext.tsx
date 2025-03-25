@@ -10,9 +10,11 @@ interface AuthContextType {
   user: AppUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  login: (emailOrPhone: string, password: string, isPhone?: boolean) => Promise<void>;
+  register: (name: string, emailOrPhone: string, password: string, isPhone?: boolean) => Promise<void>;
   logout: () => void;
+  sendOtp: (phone: string) => Promise<void>;
+  verifyOtp: (phone: string, token: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,7 +33,7 @@ const mapUserToAppUser = (user: User | null, session: Session | null): AppUser |
   
   return {
     id: user.id,
-    name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+    name: user.user_metadata?.name || user.email?.split('@')[0] || user.phone || 'User',
     email: user.email || '',
     theme: "light",
     currency: "USD"
@@ -89,13 +91,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (emailOrPhone: string, password: string, isPhone = false) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      let response;
+      
+      if (isPhone) {
+        response = await supabase.auth.signInWithPassword({
+          phone: emailOrPhone,
+          password
+        });
+      } else {
+        response = await supabase.auth.signInWithPassword({
+          email: emailOrPhone,
+          password
+        });
+      }
+      
+      const { data, error } = response;
       
       if (error) throw error;
       
@@ -109,23 +122,78 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, emailOrPhone: string, password: string, isPhone = false) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { name }
-        }
+      let response;
+      
+      if (isPhone) {
+        response = await supabase.auth.signUp({
+          phone: emailOrPhone,
+          password,
+          options: {
+            data: { name }
+          }
+        });
+      } else {
+        response = await supabase.auth.signUp({
+          email: emailOrPhone,
+          password,
+          options: {
+            data: { name }
+          }
+        });
+      }
+      
+      const { data, error } = response;
+      
+      if (error) throw error;
+      
+      toast.success(isPhone 
+        ? "Registration successful! We'll send you an OTP to verify your phone number." 
+        : "Registration successful! Check your email to confirm your account.");
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message || "Registration failed");
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendOtp = async (phone: string) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone
       });
       
       if (error) throw error;
       
-      toast.success("Registration successful! Check your email to confirm your account.");
+      toast.success("OTP sent to your phone number!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send OTP");
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyOtp = async (phone: string, token: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone,
+        token,
+        type: 'sms'
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Phone number verified successfully!");
       navigate("/dashboard");
     } catch (error: any) {
-      toast.error(error.message || "Registration failed");
+      toast.error(error.message || "Failed to verify OTP");
       throw error;
     } finally {
       setIsLoading(false);
@@ -152,7 +220,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         login,
         register,
-        logout
+        logout,
+        sendOtp,
+        verifyOtp
       }}
     >
       {children}
