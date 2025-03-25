@@ -8,11 +8,12 @@ import { Session, User } from "@supabase/supabase-js";
 
 interface AuthContextType {
   user: AppUser | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (emailOrPhone: string, password: string, isPhone?: boolean) => Promise<void>;
   register: (name: string, emailOrPhone: string, password: string, isPhone?: boolean) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   sendOtp: (phone: string) => Promise<void>;
   verifyOtp: (phone: string, token: string) => Promise<void>;
 }
@@ -42,11 +43,29 @@ const mapUserToAppUser = (user: User | null, session: Session | null): AppUser |
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AppUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get initial session
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        console.log("Auth state changed:", event);
+        
+        setSession(newSession);
+        
+        if (newSession && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+          const appUser = mapUserToAppUser(newSession.user, newSession);
+          setUser(appUser);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setSession(null);
+        }
+      }
+    );
+
+    // THEN check for existing session
     const initSession = async () => {
       setIsLoading(true);
       
@@ -59,6 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (data?.session) {
+          setSession(data.session);
           const appUser = mapUserToAppUser(data.session.user, data.session);
           setUser(appUser);
         }
@@ -71,23 +91,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     initSession();
 
-    // Set up auth state listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state changed:", event);
-        
-        if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-          const appUser = mapUserToAppUser(session.user, session);
-          setUser(appUser);
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-        }
-      }
-    );
-
     // Cleanup
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -204,6 +210,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await supabase.auth.signOut();
       setUser(null);
+      setSession(null);
       toast.success("Logged out successfully");
       navigate("/");
     } catch (error: any) {
@@ -216,6 +223,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider
       value={{
         user,
+        session,
         isAuthenticated: !!user,
         isLoading,
         login,

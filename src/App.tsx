@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,8 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { UserProvider } from "@/contexts/UserContext";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
+import { SplashScreen } from "@capacitor/splash-screen";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import AddTransaction from "./pages/AddTransaction";
@@ -21,9 +21,41 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => {
+  const [appIsReady, setAppIsReady] = useState(false);
+
+  useEffect(() => {
+    // Initialize the app
+    const prepare = async () => {
+      try {
+        // Keep the splash screen visible while we prepare the app
+        if ((window as any).Capacitor) {
+          // Only hide after a small delay to prevent flicker
+          setTimeout(async () => {
+            await SplashScreen.hide();
+            setAppIsReady(true);
+          }, 500);
+        } else {
+          setAppIsReady(true);
+        }
+      } catch (e) {
+        console.warn('Error preparing app:', e);
+        setAppIsReady(true);
+      }
+    };
+
+    prepare();
+  }, []);
+
   useEffect(() => {
     // Only run in Capacitor environment
     if (!(window as any).Capacitor) return;
@@ -45,6 +77,10 @@ const App = () => {
       }
     };
   }, []);
+
+  if (!appIsReady) {
+    return null; // Show nothing while preparing app
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
