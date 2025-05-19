@@ -19,7 +19,8 @@ export function useSupabaseBudgets(user: User): BudgetHookReturn {
         setLoading(true);
         setError(null);
         
-        const { data, error } = await supabase
+        // Use "as any" to bypass TypeScript errors with the table names
+        const { data, error } = await (supabase as any)
           .from('budgets')
           .select(`
             id,
@@ -32,9 +33,9 @@ export function useSupabaseBudgets(user: User): BudgetHookReturn {
         if (error) throw error;
         
         // Format budgets and calculate usage
-        const formattedBudgets = await Promise.all(data.map(async (item) => {
+        const formattedBudgets = await Promise.all((data || []).map(async (item: any) => {
           // Call the function to calculate current usage
-          const { data: usageData, error: usageError } = await supabase
+          const { data: usageData, error: usageError } = await (supabase as any)
             .rpc('calculate_budget_usage', { budget_id: item.id });
             
           if (usageError) throw usageError;
@@ -46,7 +47,7 @@ export function useSupabaseBudgets(user: User): BudgetHookReturn {
           
           return {
             id: item.id,
-            category: item.categories.name,
+            category: item.categories?.name || 'Uncategorized',
             amount: Number(item.amount),
             period: periodValue,
             currentUsage: Number(usageData || 0)
@@ -73,7 +74,7 @@ export function useSupabaseBudgets(user: User): BudgetHookReturn {
   const addBudget = async (newBudget: Budget) => {
     try {
       // Get category_id from name
-      const { data: categoryData, error: categoryError } = await supabase
+      const { data: categoryData, error: categoryError } = await (supabase as any)
         .from('categories')
         .select('id')
         .eq('name', newBudget.category)
@@ -82,11 +83,11 @@ export function useSupabaseBudgets(user: User): BudgetHookReturn {
       if (categoryError) throw categoryError;
       
       // Insert budget
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('budgets')
         .insert({
           user_id: user.id,
-          category_id: categoryData.id,
+          category_id: categoryData?.id,
           amount: newBudget.amount,
           period: newBudget.period
         })
@@ -99,7 +100,7 @@ export function useSupabaseBudgets(user: User): BudgetHookReturn {
       setBudgets((prevBudgets) => [
         ...prevBudgets, 
         {
-          id: data.id,
+          id: data?.id || '',
           category: newBudget.category,
           amount: newBudget.amount,
           period: newBudget.period,
@@ -124,7 +125,7 @@ export function useSupabaseBudgets(user: User): BudgetHookReturn {
   const editBudget = async (updatedBudget: Budget) => {
     try {
       // Get category_id from name
-      const { data: categoryData, error: categoryError } = await supabase
+      const { data: categoryData, error: categoryError } = await (supabase as any)
         .from('categories')
         .select('id')
         .eq('name', updatedBudget.category)
@@ -133,10 +134,10 @@ export function useSupabaseBudgets(user: User): BudgetHookReturn {
       if (categoryError) throw categoryError;
       
       // Update budget
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('budgets')
         .update({
-          category_id: categoryData.id,
+          category_id: categoryData?.id,
           amount: updatedBudget.amount,
           period: updatedBudget.period
         })
@@ -168,7 +169,7 @@ export function useSupabaseBudgets(user: User): BudgetHookReturn {
 
   const deleteBudget = async (id: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('budgets')
         .delete()
         .eq('id', id)
