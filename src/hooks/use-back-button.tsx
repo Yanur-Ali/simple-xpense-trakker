@@ -13,17 +13,21 @@ export function useBackButton() {
     let backButtonListener: any = null;
 
     const setupListener = async () => {
-      // Register the back button handler
-      backButtonListener = await App.addListener('backButton', () => {
-        // If we're at a root page, exit the app
-        if (location.pathname === '/' || location.pathname === '/dashboard') {
-          App.exitApp();
-        } else {
-          // Otherwise go back in history
-          navigate(-1);
-        }
-        return false; // Prevent default behavior
-      });
+      try {
+        // Register the back button handler
+        backButtonListener = await App.addListener('backButton', () => {
+          // If we're at a root page, exit the app
+          if (location.pathname === '/' || location.pathname === '/dashboard') {
+            App.exitApp();
+          } else {
+            // Otherwise go back in history
+            navigate(-1);
+          }
+          return false; // Prevent default behavior
+        });
+      } catch (error) {
+        console.error('Error setting up back button listener:', error);
+      }
     };
 
     setupListener();
@@ -31,7 +35,11 @@ export function useBackButton() {
     // Clean up the listener when component unmounts
     return () => {
       if ((window as any).Capacitor && backButtonListener) {
-        backButtonListener.remove();
+        try {
+          backButtonListener.remove();
+        } catch (error) {
+          console.error('Error removing back button listener:', error);
+        }
       }
     };
   }, [navigate, location.pathname]);
